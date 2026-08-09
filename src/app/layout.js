@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "MarkdView",
+  title: "MarkView",
   description: "A modern, responsive, and accessible client-side Markdown viewer built with Next.js and Tailwind CSS.",
 };
 
