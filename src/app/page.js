@@ -11,15 +11,27 @@ import { PreviewPanel } from '@/components/PreviewPanel';
  * Home Component (Main Page)
  * 
  * Serves as the central state container and coordinator for the Markdown Viewer app.
- * Responsible ONLY for:
- * 1. Managing application state (fileData, isLoading, error).
+ * Responsible for:
+ * 1. Managing application state (fileData, isLoading, error, summary, isSummarizing, summaryError).
  * 2. Orchestrating file validation and asynchronous reading.
- * 3. Composing top-level layout components (Header, UploadZone, PreviewPanel).
+ * 3. Calling the AI summarize endpoint.
+ * 4. Composing top-level layout components (Header, UploadZone, PreviewPanel).
  */
 export default function Home() {
   const [fileData, setFileData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Summary feature state
+  const [summary, setSummary] = useState(null);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summaryError, setSummaryError] = useState(null);
+
+  const resetSummaryState = () => {
+    setSummary(null);
+    setIsSummarizing(false);
+    setSummaryError(null);
+  };
 
   /**
    * Callback function to handle file selection and initiate processing.
@@ -34,6 +46,7 @@ export default function Home() {
   const handleFileSelect = async (file) => {
     setError(null);
     setFileData(null);
+    resetSummaryState();
 
     const validation = validateMarkdownFile(file);
     if (!validation.isValid) {
@@ -62,7 +75,43 @@ export default function Home() {
     setFileData(null);
     setError(null);
     setIsLoading(false);
-  }
+    resetSummaryState();
+  };
+
+  /**
+   * This function orchestrates the AI summarization pipeline:
+   * 1. Validates the file content for summarization.
+   * 2. Calls the AI summarization endpoint.
+   * 3. Updates the component state with the summary.
+   */
+  const handleSummarize = async () => {
+    if (!fileData?.content || isSummarizing) return;
+
+    setIsSummarizing(true);
+    setSummaryError(null);
+
+    try {
+      const res = await fetch('/api/summarize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: fileData.content }),
+      });
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Unable to generate summary. Something went wrong. Please try again.');
+      }
+
+      setSummary(data.bullets || []);
+    } catch (err) {
+      setSummaryError(err.message || 'Unable to generate summary. Something went wrong. Please try again.');
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-sans antialiased">
@@ -72,7 +121,7 @@ export default function Home() {
         <section className="w-full">
           <UploadZone
             onFileSelect={handleFileSelect}
-            disabled={isLoading}
+            disabled={isLoading || isSummarizing}
           />
         </section>
 
@@ -82,9 +131,14 @@ export default function Home() {
             isLoading={isLoading}
             error={error}
             onReset={handleRemoveFile}
+            summary={summary}
+            isSummarizing={isSummarizing}
+            summaryError={summaryError}
+            onSummarize={handleSummarize}
           />
         </section>
       </main>
     </div>
   );
 }
+

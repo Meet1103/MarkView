@@ -1,11 +1,19 @@
 import { useState } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 /**
  * Preview toolbar displaying the current file and document actions.
  */
-export function Toolbar({ fileName, fileContent, previewRef, isLoading, error }) {
+export function Toolbar({
+  fileName,
+  fileContent,
+  previewRef,
+  isLoading,
+  error,
+  isSummarizing,
+  onSummarize,
+}) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -45,18 +53,43 @@ export function Toolbar({ fileName, fileContent, previewRef, isLoading, error })
     }
   };
 
+  const isSummarizeDisabled = !fileContent || isLoading || !!error || isSummarizing;
+
   return (
-    <div className="flex items-center justify-between p-3.5 px-6 bg-card border-b border-border rounded-t-2xl">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 px-4 sm:px-6 bg-card border-b border-border rounded-t-2xl">
       <div className="text-sm font-medium text-muted-foreground truncate max-w-[240px] sm:max-w-[400px]">
         {fileName || 'No file loaded'}
       </div>
 
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2.5 self-start sm:self-auto">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onSummarize}
+          disabled={isSummarizeDisabled}
+          aria-label="Summarize document"
+          aria-busy={isSummarizing}
+          className="h-8 px-3.5 text-xs font-medium gap-2 border-primary/30 bg-primary/10 text-indigo-300 cursor-pointer hover:bg-primary/20 hover:text-white hover:border-primary/50 focus-visible:ring-ring disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-all"
+        >
+          {isSummarizing ? (
+            <>
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+              <span>Summarizing...</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <span>Summarize</span>
+            </>
+          )}
+        </Button>
+
         <Button
           variant="outline"
           size="sm"
           onClick={handleCopy}
           disabled={!fileContent || isLoading || !!error}
+          aria-label="Copy document content"
           className="h-8 px-3.5 text-xs font-medium gap-2 border-border bg-secondary text-foreground cursor-pointer hover:bg-secondary/80 hover:border-primary/50 focus-visible:ring-ring disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-all"
         >
           {copied ? (
@@ -75,3 +108,4 @@ export function Toolbar({ fileName, fileContent, previewRef, isLoading, error })
     </div>
   );
 }
+

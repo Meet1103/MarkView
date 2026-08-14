@@ -1,6 +1,7 @@
 import dynamic from 'next/dynamic';
 import { useRef } from 'react';
 import { Toolbar } from '@/components/Toolbar';
+import { SummaryBanner } from '@/components/SummaryBanner';
 import { LoadingState } from '@/components/LoadingState';
 import { ErrorState } from '@/components/ErrorState';
 import { EmptyState } from '@/components/EmptyState';
@@ -17,9 +18,18 @@ const MarkdownRenderer = dynamic(
 );
 
 /**
- * Preview panel that composes the toolbar, document states, and Markdown renderer.
+ * Preview panel that composes the toolbar, document states, summary banner, and Markdown renderer.
  */
-export function PreviewPanel({ fileData, isLoading, error, onReset }) {
+export function PreviewPanel({
+  fileData,
+  isLoading,
+  error,
+  onReset,
+  summary,
+  isSummarizing,
+  summaryError,
+  onSummarize,
+}) {
   const previewRef = useRef(null);
   const fileName = error ? 'Upload error' : fileData?.name;
 
@@ -31,6 +41,8 @@ export function PreviewPanel({ fileData, isLoading, error, onReset }) {
         previewRef={previewRef}
         isLoading={isLoading}
         error={error}
+        isSummarizing={isSummarizing}
+        onSummarize={onSummarize}
       />
 
       <ErrorBoundary onReset={onReset}>
@@ -39,9 +51,17 @@ export function PreviewPanel({ fileData, isLoading, error, onReset }) {
         ) : error ? (
           <ErrorState message={error} />
         ) : fileData ? (
-          <div ref={previewRef}>
-            <MarkdownRenderer content={fileData.content} />
-          </div>
+          <>
+            <SummaryBanner
+              summary={summary}
+              isSummarizing={isSummarizing}
+              error={summaryError}
+              onRetry={onSummarize}
+            />
+            <div ref={previewRef}>
+              <MarkdownRenderer content={fileData.content} />
+            </div>
+          </>
         ) : (
           <EmptyState />
         )}
@@ -49,3 +69,4 @@ export function PreviewPanel({ fileData, isLoading, error, onReset }) {
     </div>
   );
 }
+

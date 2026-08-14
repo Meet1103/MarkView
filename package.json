@@ -9,8 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.44",
     "@base-ui/react": "^1.7.0",
     "@tailwindcss/typography": "^0.5.20",
+    "ai": "^7.0.65",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "highlight.js": "^11.11.1",
